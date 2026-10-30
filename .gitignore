@@ -1,0 +1,15 @@
+﻿# build intermediates
+/build/
+/check/
+/check2/
+/classes.dex
+/base.apk
+/unsigned.apk
+/aligned.apk
+/installed.apk
+/vibrate5s.apk
+/vibrate5s.apk.idsig
+
+# local signing material
+*.keystore
+*.jks
