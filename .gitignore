@@ -13,3 +13,6 @@
 # local signing material
 *.keystore
 *.jks
+
+# v4 signature sidecar
+/dist/*.idsig
