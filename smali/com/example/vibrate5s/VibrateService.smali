@@ -47,7 +47,7 @@
     move-result-object v0
 
     const-string v1, "threshold_sec"
-    const/16 v2, 0x3c
+    const/16 v2, 0xb4
     invoke-interface {v0, v1, v2}, Landroid/content/SharedPreferences;->getInt(Ljava/lang/String;I)I
     move-result v2
 

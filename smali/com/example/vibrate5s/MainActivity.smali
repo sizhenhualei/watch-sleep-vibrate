@@ -72,7 +72,7 @@
     move-result-object v2
     invoke-direct {p0, v1, v2}, Lcom/example/vibrate5s/MainActivity;->addViewFull(Landroid/view/ViewGroup;Landroid/view/View;)V
 
-    const-string v2, "判定时间（秒，10-180）"
+    const-string v2, "判定时间（秒，1-999）"
     iget v3, p0, Lcom/example/vibrate5s/MainActivity;->thresholdSec:I
     const/16 v4, 0x7d1
     invoke-direct {p0, v2, v3, v4}, Lcom/example/vibrate5s/MainActivity;->makeInput(Ljava/lang/String;II)Landroid/widget/LinearLayout;
@@ -137,7 +137,7 @@
     iget-object v0, p0, Lcom/example/vibrate5s/MainActivity;->prefs:Landroid/content/SharedPreferences;
 
     const-string v1, "threshold_sec"
-    const/16 v2, 0x3c
+    const/16 v2, 0xb4
     invoke-interface {v0, v1, v2}, Landroid/content/SharedPreferences;->getInt(Ljava/lang/String;I)I
     move-result v2
     iput v2, p0, Lcom/example/vibrate5s/MainActivity;->thresholdSec:I
@@ -161,11 +161,11 @@
     .registers 6
 
     iget-object v0, p0, Lcom/example/vibrate5s/MainActivity;->thresholdInput:Landroid/widget/EditText;
-    const/16 v1, 0x3c
+    const/16 v1, 0xb4
     invoke-direct {p0, v0, v1}, Lcom/example/vibrate5s/MainActivity;->readInt(Landroid/widget/EditText;I)I
     move-result v0
-    const/16 v1, 0xa
-    const/16 v2, 0xb4
+    const/16 v1, 0x1
+    const/16 v2, 0x3e7
     invoke-direct {p0, v0, v1, v2}, Lcom/example/vibrate5s/MainActivity;->clamp(III)I
     move-result v0
     iput v0, p0, Lcom/example/vibrate5s/MainActivity;->thresholdSec:I
