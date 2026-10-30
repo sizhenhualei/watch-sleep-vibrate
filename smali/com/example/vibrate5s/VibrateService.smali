@@ -2,11 +2,13 @@
 .super Landroid/app/Service;
 .source "VibrateService.java"
 
-.field public static final ALARM_INTERVAL:J = 0xbb8L
-
-.field public static final THRESHOLD:J = 0x7530L
-
 .field public static final VIBRATE_MS:J = 0x320L
+
+.field public thresholdMs:J
+
+.field public intervalMs:J
+
+.field public amplitude:I
 
 .field public accelerometer:Landroid/hardware/Sensor;
 
@@ -39,6 +41,37 @@
 
     invoke-super {p0}, Landroid/app/Service;->onCreate()V
 
+    const-string v0, "settings"
+    const/4 v1, 0x0
+    invoke-virtual {p0, v0, v1}, Landroid/content/Context;->getSharedPreferences(Ljava/lang/String;I)Landroid/content/SharedPreferences;
+    move-result-object v0
+
+    const-string v1, "threshold_sec"
+    const/16 v2, 0x3c
+    invoke-interface {v0, v1, v2}, Landroid/content/SharedPreferences;->getInt(Ljava/lang/String;I)I
+    move-result v2
+
+    int-to-long v3, v2
+    const-wide/16 v5, 0x3e8
+    mul-long/2addr v3, v5
+    iput-wide v3, p0, Lcom/example/vibrate5s/VibrateService;->thresholdMs:J
+
+    const-string v1, "amplitude"
+    const/16 v2, 0xff
+    invoke-interface {v0, v1, v2}, Landroid/content/SharedPreferences;->getInt(Ljava/lang/String;I)I
+    move-result v2
+    iput v2, p0, Lcom/example/vibrate5s/VibrateService;->amplitude:I
+
+    const-string v1, "interval_sec"
+    const/4 v2, 0x3
+    invoke-interface {v0, v1, v2}, Landroid/content/SharedPreferences;->getInt(Ljava/lang/String;I)I
+    move-result v2
+
+    int-to-long v3, v2
+    const-wide/16 v5, 0x3e8
+    mul-long/2addr v3, v5
+    iput-wide v3, p0, Lcom/example/vibrate5s/VibrateService;->intervalMs:J
+
     sget v0, Landroid/os/Build$VERSION;->SDK_INT:I
     const/16 v1, 0x1a
     if-lt v0, v1, :cond_channel_done
@@ -66,7 +99,7 @@
     invoke-virtual {v0, v1}, Landroid/app/Notification$Builder;->setContentTitle(Ljava/lang/CharSequence;)Landroid/app/Notification$Builder;
     move-result-object v0
 
-    const-string v1, "静止 30 秒后震动"
+    const-string v1, "检测到长时间静止后震动"
     invoke-virtual {v0, v1}, Landroid/app/Notification$Builder;->setContentText(Ljava/lang/CharSequence;)Landroid/app/Notification$Builder;
     move-result-object v0
 
@@ -167,7 +200,7 @@
     if-eqz v0, :cond_end
 
     const-wide/16 v1, 0x320
-    const/4 v3, -0x1
+    iget v3, p0, Lcom/example/vibrate5s/VibrateService;->amplitude:I
     invoke-static {v1, v2, v3}, Landroid/os/VibrationEffect;->createOneShot(JI)Landroid/os/VibrationEffect;
     move-result-object v1
 

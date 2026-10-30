@@ -47,7 +47,7 @@
     iget-wide v4, v0, Lcom/example/vibrate5s/VibrateService;->lastMovement:J
     sub-long/2addr v2, v4
 
-    const-wide/16 v4, 0x7530
+    iget-wide v4, v0, Lcom/example/vibrate5s/VibrateService;->thresholdMs:J
     cmp-long v6, v2, v4
     if-ltz v6, :post_1s
 
@@ -57,7 +57,7 @@
     invoke-virtual {v0}, Lcom/example/vibrate5s/VibrateService;->vibrateOnce()V
 
     :post_3s
-    const-wide/16 v4, 0xbb8
+    iget-wide v4, v0, Lcom/example/vibrate5s/VibrateService;->intervalMs:J
     goto :post
 
     :post_1s

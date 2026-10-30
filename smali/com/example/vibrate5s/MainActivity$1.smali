@@ -1,4 +1,4 @@
-.class Lcom/example/vibrate5s/MainActivity$1;
+.class public Lcom/example/vibrate5s/MainActivity$1;
 .super Ljava/lang/Object;
 .implements Landroid/view/View$OnClickListener;
 .source "MainActivity.java"
@@ -16,17 +16,21 @@
 .end method
 
 .method public onClick(Landroid/view/View;)V
-    .registers 5
+    .registers 4
 
     iget-object v0, p0, Lcom/example/vibrate5s/MainActivity$1;->this$0:Lcom/example/vibrate5s/MainActivity;
 
-    new-instance v1, Landroid/content/Intent;
-    const-class v2, Lcom/example/vibrate5s/VibrateService;
-    invoke-direct {v1, v0, v2}, Landroid/content/Intent;-><init>(Landroid/content/Context;Ljava/lang/Class;)V
+    invoke-virtual {p1}, Landroid/view/View;->getId()I
+    move-result v1
 
-    invoke-virtual {v0, v1}, Landroid/content/Context;->stopService(Landroid/content/Intent;)Z
+    const/16 v2, 0x3e9
+    if-ne v1, v2, :cond_stop
 
-    invoke-virtual {v0}, Landroid/app/Activity;->finish()V
+    invoke-virtual {v0}, Lcom/example/vibrate5s/MainActivity;->saveAndRestart()V
+    return-void
+
+    :cond_stop
+    invoke-virtual {v0}, Lcom/example/vibrate5s/MainActivity;->stopAndFinish()V
 
     return-void
 .end method
