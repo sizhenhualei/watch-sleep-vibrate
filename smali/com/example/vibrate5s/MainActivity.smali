@@ -149,7 +149,7 @@
     iput v2, p0, Lcom/example/vibrate5s/MainActivity;->amplitude:I
 
     const-string v1, "interval_sec"
-    const/4 v2, 0x3
+    const/4 v2, 0x1
     invoke-interface {v0, v1, v2}, Landroid/content/SharedPreferences;->getInt(Ljava/lang/String;I)I
     move-result v2
     iput v2, p0, Lcom/example/vibrate5s/MainActivity;->intervalSec:I

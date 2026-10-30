@@ -63,7 +63,7 @@
     iput v2, p0, Lcom/example/vibrate5s/VibrateService;->amplitude:I
 
     const-string v1, "interval_sec"
-    const/4 v2, 0x3
+    const/4 v2, 0x1
     invoke-interface {v0, v1, v2}, Landroid/content/SharedPreferences;->getInt(Ljava/lang/String;I)I
     move-result v2
 
@@ -127,7 +127,6 @@
     invoke-virtual {v0, v1, v2}, Landroid/os/PowerManager;->newWakeLock(ILjava/lang/String;)Landroid/os/PowerManager$WakeLock;
     move-result-object v0
     iput-object v0, p0, Lcom/example/vibrate5s/VibrateService;->wakeLock:Landroid/os/PowerManager$WakeLock;
-    invoke-virtual {v0}, Landroid/os/PowerManager$WakeLock;->acquire()V
 
     sget v0, Landroid/os/Build$VERSION;->SDK_INT:I
     const/16 v1, 0x1f
@@ -174,7 +173,7 @@
     iget-object v0, p0, Lcom/example/vibrate5s/VibrateService;->sensorManager:Landroid/hardware/SensorManager;
     iget-object v1, p0, Lcom/example/vibrate5s/VibrateService;->listener:Landroid/hardware/SensorEventListener;
     iget-object v2, p0, Lcom/example/vibrate5s/VibrateService;->accelerometer:Landroid/hardware/Sensor;
-    const/4 v3, 0x3
+    const v3, 0x7a120
     invoke-virtual {v0, v1, v2, v3}, Landroid/hardware/SensorManager;->registerListener(Landroid/hardware/SensorEventListener;Landroid/hardware/Sensor;I)Z
 
     invoke-static {}, Landroid/os/SystemClock;->elapsedRealtime()J
@@ -244,6 +243,11 @@
     iget-object v0, p0, Lcom/example/vibrate5s/VibrateService;->wakeLock:Landroid/os/PowerManager$WakeLock;
     if-eqz v0, :cond_lock
 
+    invoke-virtual {v0}, Landroid/os/PowerManager$WakeLock;->isHeld()Z
+    move-result v0
+    if-eqz v0, :cond_lock
+
+    iget-object v0, p0, Lcom/example/vibrate5s/VibrateService;->wakeLock:Landroid/os/PowerManager$WakeLock;
     invoke-virtual {v0}, Landroid/os/PowerManager$WakeLock;->release()V
 
     :cond_lock
