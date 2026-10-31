@@ -149,7 +149,7 @@
     iput v2, p0, Lcom/example/vibrate5s/MainActivity;->amplitude:I
 
     const-string v1, "interval_sec"
-    const/4 v2, 0x1
+    const/4 v2, 0x3
     invoke-interface {v0, v1, v2}, Landroid/content/SharedPreferences;->getInt(Ljava/lang/String;I)I
     move-result v2
     iput v2, p0, Lcom/example/vibrate5s/MainActivity;->intervalSec:I
@@ -174,6 +174,7 @@
     const/16 v1, 0xff
     invoke-direct {p0, v0, v1}, Lcom/example/vibrate5s/MainActivity;->readInt(Landroid/widget/EditText;I)I
     move-result v0
+
     const/4 v1, 0x1
     const/16 v2, 0xff
     invoke-direct {p0, v0, v1, v2}, Lcom/example/vibrate5s/MainActivity;->clamp(III)I
@@ -282,15 +283,15 @@
 .method private clamp(III)I
     .registers 4
 
-    if-ge p1, p2, :low
-    if-gt p1, p3, :ok
-    return p3
+    if-lt p1, p2, :low
+    if-gt p1, p3, :high
+    return p1
 
     :low
     return p2
 
-    :ok
-    return p1
+    :high
+    return p3
 .end method
 
 .method private makeLabel(Ljava/lang/String;F)Landroid/widget/TextView;

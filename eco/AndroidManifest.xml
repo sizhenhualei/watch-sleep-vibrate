@@ -1,18 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.vibrate5s"
-    android:versionCode="5"
-    android:versionName="1.4">
+    android:versionCode="11"
+    android:versionName="1.0-eco">
 
     <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="30" />
 
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.SET_ALARM" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-feature android:name="android.hardware.type.watch" android:required="false" />
 
     <application
-        android:label="别睡"
+        android:label="NDZ Eco"
         android:allowBackup="false">
 
         <activity

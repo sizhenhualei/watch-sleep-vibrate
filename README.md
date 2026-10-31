@@ -1,75 +1,54 @@
-# 别睡 / BieShui
+# NDZ — NoDoze for Wear OS
 
-一个 Wear OS 小工具：用加速度计检测手表是否长时间静止，静止超过设定时间后震动提醒；检测到移动后停止并重新计时。
+**NDZ** is the short name for **NoDoze**, a tiny Wear OS app that watches for long stillness and vibrates to wake you. The Chinese in-app title is still **别睡**.
 
-> 这是加速度计“静止检测”，不是医疗级睡眠检测，不能判断真实睡眠阶段。
+This repository ships two editions of the same app:
 
-## 功能
+| Edition | Release | Best for | Monitoring strategy |
+|---|---|---|---|
+| **NDZ 1.0** | `v1.0` | Reliability first | Continuous accelerometer monitoring (6.25 Hz) + foreground service |
+| **NDZ 1.0 Eco** | `v1.0-eco` | Battery first | Wake-up `device_orientation` + `wrist_tilt_gesture` sensors + exact `AlarmManager` alarm; WakeLock only while the alarm is firing |
 
-- 前台服务 + 加速度计监测
-- 判定时间可设置：1–999 秒，默认 180 秒（3 分钟）
-- 震动强度可设置：1–255，默认 255
-- 震动间隔可设置：1–30 秒，默认 1 秒
-- 静止超过判定时间后开始震动，每次 800ms；移动后停止并重新计时
-- 默认组合为 180 秒 / 255 / 1 秒，适合快速提醒；也可按场景自行调整
-- 数字输入界面，适配 450×450 圆屏手表
-- 主界面提供“保存并重启监测”和“停止监测”
-- 省电优化：不持有常驻 WakeLock，加速度计约 500ms 采样；在 SM-R870 上实测息屏后服务仍可检测
+Both editions share the same package name (`com.example.vibrate5s`) and cannot be installed side by side. Uninstall one before installing the other.
 
-## 已验证设备
+## Downloads
 
-- Samsung Galaxy Watch4（SM-R870）
-- Wear OS / Android 16
-- minSdk 28，targetSdk 30
-
-## 安装
+- `releases/NDZ-1.0.apk` — standard edition, versionCode 10 / versionName 1.0
+- `releases/NDZ-1.0-Eco.apk` — power-saving edition, versionCode 11 / versionName 1.0-eco
+- Icon: `assets/NDZ-icon-1024.png`
 
 ```bash
-adb install -r dist/bieshui.apk
+adb install -r -d -g releases/NDZ-1.0.apk
+# or
+adb install -r -d -g releases/NDZ-1.0-Eco.apk
 ```
 
-安装后打开“别睡”，服务会自动启动；修改数字后点“保存并重启监测”。点“停止监测”会停止服务并退出界面。
+## Shared behavior
 
-## 项目结构
+- Stillness threshold: **1–999 s**, default **180 s**
+- Vibration strength: **1–255**, default **255**
+- Vibration interval: **1–30 s**, default **3 s**
+- Each pulse: **800 ms**
+- Moving the watch stops the alarm and restarts the timer
+- Foreground-service notification keeps the monitor alive
+- Numeric settings UI designed for the 450×450 round watch screen
+- Tested on Samsung Galaxy Watch4 (SM-R870), Wear OS / Android 16
 
-```text
-AndroidManifest.xml
-smali/com/example/vibrate5s/
-  MainActivity.smali          # 数字输入设置界面
-  MainActivity$1.smali        # 保存/停止按钮
-  VibrateService.smali        # 前台服务、读取设置、震动
-  VibrateService$1.smali      # 加速度计监听
-  VibrateService$2.smali      # 计时与报警循环
-tools/build.ps1               # 构建脚本
-tools/pack.py                 # 将 classes.dex 合入 APK
-dist/bieshui.apk              # 已签名的调试版 APK
-```
+## Standard vs Eco
 
-## 构建
+**NDZ 1.0** keeps the accelerometer running continuously and holds a partial WakeLock. It is the most predictable edition, at the cost of higher battery use.
 
-依赖：
+**NDZ 1.0 Eco** does not keep a permanent WakeLock. It listens for wake-up orientation / wrist-tilt events, schedules an exact alarm for `lastMovement + threshold`, and only acquires a short alarm WakeLock when the alarm actually fires. This is the low-power edition.
 
-- JDK（`java`、`apksigner` 需要）
-- Android build-tools（`aapt`、`zipalign`、`apksigner`）
-- Android platform 的 `android.jar`
-- [smali/baksmali](https://github.com/JesusFreke/smali) 2.5.2
-- Python 3
+## Build
 
-示例：
+Each edition is self-contained:
 
-```powershell
-.\tools\build.ps1 `
-  -SmaliJar  "C:\path\to\smali-2.5.2.jar" `
-  -SmaliDeps "C:\path\to\smali-deps\*" `
-  -AndroidJar "C:\path\to\android-35\android.jar" `
-  -BuildTools "C:\path\to\build-tools\35.0.0" `
-  -Keystore "C:\Users\me\.android\debug.keystore"
-```
+- `standard/` — NDZ 1.0 source and `tools/build.ps1`
+- `eco/` — NDZ 1.0 Eco source and `tools/build.ps1`
 
-脚本默认使用 `java`、`python`，并用 debug keystore 签名。发布前请换成自己的签名。
+The APKs in `releases/` are signed with the development keystore and are intended for sideloading, not Play Store distribution.
 
-## 说明
+## Disclaimer
 
-- 本项目是手写 smali 工程，没有 Gradle。
-- 三星 W 系列可能对后台应用做冻结/省电限制；如果服务被系统杀掉，需要把“别睡”加入电池白名单或保持前台通知。
-- 本项目仅用于个人学习与自用，不构成医疗建议。
+This is accelerometer/orientation stillness detection, **not medical-grade sleep monitoring** and not a diagnosis tool. Do not rely on it for medical or safety-critical alerts.
