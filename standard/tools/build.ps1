@@ -31,6 +31,7 @@ if ($LASTEXITCODE -ne 0) { throw "smali assemble failed" }
 Write-Host "[2/6] aapt package"
 & (Join-Path $BuildTools "aapt.exe") package -f `
     -M (Join-Path $root "AndroidManifest.xml") `
+    -S (Join-Path $root "res") `
     -I $AndroidJar `
     -F $baseApk
 if ($LASTEXITCODE -ne 0) { throw "aapt package failed" }
@@ -44,7 +45,7 @@ Write-Host "[4/6] zipalign"
 if ($LASTEXITCODE -ne 0) { throw "zipalign failed" }
 
 Write-Host "[5/6] sign"
-& (Join-Path $BuildTools "apksigner.bat") sign `
+& $Java -jar (Join-Path $BuildTools "lib\apksigner.jar") sign `
     --ks $Keystore `
     --ks-pass "pass:$KeystorePass" `
     --key-pass "pass:$KeyPass" `
@@ -54,7 +55,7 @@ Write-Host "[5/6] sign"
 if ($LASTEXITCODE -ne 0) { throw "apksigner failed" }
 
 Write-Host "[6/6] verify"
-& (Join-Path $BuildTools "apksigner.bat") verify --verbose $outApk
+& $Java -jar (Join-Path $BuildTools "lib\apksigner.jar") verify --verbose $outApk
 if ($LASTEXITCODE -ne 0) { throw "apksigner verify failed" }
 
 Write-Host "OK: $outApk"

@@ -13,9 +13,11 @@ Both editions share the same package name (`com.example.vibrate5s`) and cannot b
 
 ## Downloads
 
-- `releases/NDZ-1.0.apk` — standard edition, versionCode 10 / versionName 1.0
-- `releases/NDZ-1.0-Eco.apk` — power-saving edition, versionCode 11 / versionName 1.0-eco
+- `releases/NDZ-1.0.apk` — standard edition, versionCode 10 / versionName 1.0, SHA256 `94C3E6D0D0ED331FCDAB0B39BE73BB73E22ACC6986FA7179E96D6988844EDD98`
+- `releases/NDZ-1.0-Eco.apk` — power-saving edition, versionCode 11 / versionName 1.0-eco, SHA256 `7C2E9B59528A4F782D6FEB22DDFEEF11D5BCA9B98E88F78C7629F7226B6C198A`
 - Icon: `assets/NDZ-icon-1024.png`
+
+Both APKs include the NDZ launcher icon.
 
 ```bash
 adb install -r -d -g releases/NDZ-1.0.apk

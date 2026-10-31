@@ -13,6 +13,8 @@
 
     <application
         android:label="NDZ"
+        android:icon="@drawable/ic_launcher"
+        android:roundIcon="@drawable/ic_launcher"
         android:allowBackup="false">
 
         <activity

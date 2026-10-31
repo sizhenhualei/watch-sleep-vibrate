@@ -16,6 +16,8 @@
 
     <application
         android:label="NDZ Eco"
+        android:icon="@drawable/ic_launcher"
+        android:roundIcon="@drawable/ic_launcher"
         android:allowBackup="false">
 
         <activity
