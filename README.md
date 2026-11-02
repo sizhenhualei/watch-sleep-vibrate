@@ -1,56 +1,50 @@
 # NDZ — NoDoze for Wear OS
 
-**NDZ** is the short name for **NoDoze**, a tiny Wear OS app that watches for long stillness and vibrates to wake you. The Chinese in-app title is still **别睡**.
+**NDZ** (short for **NoDoze**) watches for long stillness and vibrates to wake you. The Chinese in-app title is **别睡**.
 
-This repository ships two editions of the same app:
+## NDZ 2.0 — five monitoring modes in one app
 
-| Edition | Release | Best for | Monitoring strategy |
-|---|---|---|---|
-| **NDZ 1.0** | `v1.0` | Reliability first | Continuous accelerometer monitoring (6.25 Hz) + foreground service |
-| **NDZ 1.0 Eco** | `v1.0-eco` | Battery first | Wake-up `device_orientation` + `wrist_tilt_gesture` sensors + exact `AlarmManager` alarm; WakeLock only while the alarm is firing |
+| Mode | Strategy | Approx. time to alarm |
+|---|---|---|
+| **Eco** | Event-driven: orientation + wrist-tilt; exact alarm at `lastMovement + threshold` | user-set threshold + 30 s confirmation |
+| **One minute** | 60 s sampling | ~90 s |
+| **Low power** | 30 s sampling | ~60 s |
+| **High frequency** | 15 s sampling | ~45 s |
+| **Continuous** | continuous accelerometer | ~30 s |
 
-Both editions share the same package name (`com.example.vibrate5s`) and cannot be installed side by side. Uninstall one before installing the other.
+The four fixed modes use the same 30-second confirmation window: if the watch moves during confirmation, the alarm is cancelled and detection resumes. Eco is the most battery-friendly; Continuous is the most sensitive.
+
+### UI behavior
+
+- Numeric settings, tuned for a round 450×450 Wear OS screen
+- Threshold **1–999 s**, default **180 s**
+- Vibration strength **1–255**, default **255**
+- Vibration interval **1–30 s**, default **3 s**
+- Each pulse is **800 ms**
+- **Only Eco shows the threshold field**; fixed modes show their own strategy hint
+- No save button — edits auto-save (600 ms debounce) and hot-restart the running monitor
+- Start button changes to **已开启** and disables; stop returns to **开启监测** and shows **已关闭** without leaving the screen
 
 ## Downloads
 
-- `releases/NDZ-1.0.apk` — standard edition, versionCode 10 / versionName 1.0, SHA256 `94C3E6D0D0ED331FCDAB0B39BE73BB73E22ACC6986FA7179E96D6988844EDD98`
-- `releases/NDZ-1.0-Eco.apk` — power-saving edition, versionCode 11 / versionName 1.0-eco, SHA256 `7C2E9B59528A4F782D6FEB22DDFEEF11D5BCA9B98E88F78C7629F7226B6C198A`
+- `releases/NDZ-2.0.apk` — unified five-mode edition, versionCode 12 / versionName 2.0
+- `releases/NDZ-1.0.apk` — historical standard edition (continuous accelerometer)
+- `releases/NDZ-1.0-Eco.apk` — historical Eco-only edition
 - Icon: `assets/NDZ-icon-1024.png`
 
-Both APKs include the NDZ launcher icon.
+All editions use package `com.example.vibrate5s` and cannot be installed side by side.
 
 ```bash
-adb install -r -d -g releases/NDZ-1.0.apk
-# or
-adb install -r -d -g releases/NDZ-1.0-Eco.apk
+adb install -r -d -g releases/NDZ-2.0.apk
 ```
-
-## Shared behavior
-
-- Stillness threshold: **1–999 s**, default **180 s**
-- Vibration strength: **1–255**, default **255**
-- Vibration interval: **1–30 s**, default **3 s**
-- Each pulse: **800 ms**
-- Moving the watch stops the alarm and restarts the timer
-- Foreground-service notification keeps the monitor alive
-- Numeric settings UI designed for the 450×450 round watch screen
-- Tested on Samsung Galaxy Watch4 (SM-R870), Wear OS / Android 16
-
-## Standard vs Eco
-
-**NDZ 1.0** keeps the accelerometer running continuously and holds a partial WakeLock. It is the most predictable edition, at the cost of higher battery use.
-
-**NDZ 1.0 Eco** does not keep a permanent WakeLock. It listens for wake-up orientation / wrist-tilt events, schedules an exact alarm for `lastMovement + threshold`, and only acquires a short alarm WakeLock when the alarm actually fires. This is the low-power edition.
 
 ## Build
 
-Each edition is self-contained:
-
-- `standard/` — NDZ 1.0 source and `tools/build.ps1`
-- `eco/` — NDZ 1.0 Eco source and `tools/build.ps1`
+- `v2/` — NDZ 2.0 Java source, resources and `tools/build.ps1`
+- `standard/`, `eco/` — historical 1.0 sources
 
 The APKs in `releases/` are signed with the development keystore and are intended for sideloading, not Play Store distribution.
 
 ## Disclaimer
 
-This is accelerometer/orientation stillness detection, **not medical-grade sleep monitoring** and not a diagnosis tool. Do not rely on it for medical or safety-critical alerts.
+This is stillness detection, **not medical-grade sleep monitoring** and not a diagnosis tool. Do not rely on it for medical or safety-critical alerts.
