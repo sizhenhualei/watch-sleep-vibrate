@@ -49,10 +49,15 @@ adb install -r -d -g releases/NDZ-2.1-OPFix.apk
 
 ## Share-site mirror
 
+- `NDZ-2.1.apk`: `https://pan.1314514.xyz/file.php?hash=3185764d07b5949821b4a2fc6e4d006d`
+- `NDZ-2.1-OPFix.apk`: `https://pan.1314514.xyz/file.php?hash=1f8cfc79c1657934631ba97e222a3e22`
 - Video (compressed 960×540): `https://pan.1314514.xyz/file.php?hash=a20927267cff862758c32e04ed51c35a`
-- Direct: `https://pan.1314514.xyz/down.php/a20927267cff862758c32e04ed51c35a.mp4`
 
-APK mirrors are uploaded to the same share site alongside each GitHub release.
+Direct links:
+
+- `https://pan.1314514.xyz/down.php/3185764d07b5949821b4a2fc6e4d006d.apk`
+- `https://pan.1314514.xyz/down.php/1f8cfc79c1657934631ba97e222a3e22.apk`
+- `https://pan.1314514.xyz/down.php/a20927267cff862758c32e04ed51c35a.mp4`
 
 ## Build
 
