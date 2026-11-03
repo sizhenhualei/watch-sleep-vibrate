@@ -6,16 +6,26 @@ param(
     [string] $KeystorePass = "android",
     [string] $KeyAlias = "androiddebugkey",
     [string] $KeyPass = "android",
-    [string] $Python = "C:\Users\hualei\tools\python313\python.exe"
+    [string] $Python = "C:\Users\hualei\tools\python313\python.exe",
+    [string] $Manifest = "",
+    [string] $OutApk = ""
 )
 
 $ErrorActionPreference = "Continue"
 $root = Split-Path -Parent $PSScriptRoot
+if ([string]::IsNullOrWhiteSpace($Manifest)) {
+    $Manifest = Join-Path $root "AndroidManifest.xml"
+} elseif (-not [System.IO.Path]::IsPathRooted($Manifest)) {
+    $Manifest = Join-Path $root $Manifest
+}
+if ([string]::IsNullOrWhiteSpace($OutApk)) { $OutApk = "ndz-unified.apk" }
 $build = Join-Path $root "build"
 $dist = Join-Path $root "dist"
 $classes = Join-Path $build "classes"
 $dexDir = Join-Path $build "dex"
 New-Item -ItemType Directory -Force -Path $build, $dist, $classes, $dexDir | Out-Null
+$manifestForAapt = Join-Path $build "AndroidManifest.xml"
+Copy-Item $Manifest $manifestForAapt -Force
 Get-ChildItem $classes -Recurse -File -ErrorAction SilentlyContinue | Remove-Item -Force
 Get-ChildItem $dexDir -File -ErrorAction SilentlyContinue | Remove-Item -Force
 
@@ -39,7 +49,7 @@ if ($LASTEXITCODE -ne 0) { throw "d8 failed" }
 Write-Host "[3/7] aapt package"
 $baseApk = Join-Path $build "base.apk"
 & (Join-Path $BuildTools "aapt.exe") package -f `
-    -M (Join-Path $root "AndroidManifest.xml") `
+    -M $manifestForAapt `
     -S (Join-Path $root "res") `
     -I $AndroidJar `
     -F $baseApk
@@ -56,7 +66,7 @@ $alignedApk = Join-Path $build "aligned.apk"
 if ($LASTEXITCODE -ne 0) { throw "zipalign failed" }
 
 Write-Host "[6/7] sign"
-$outApk = Join-Path $dist "ndz-unified.apk"
+$outApk = Join-Path $dist $OutApk
 & $java -jar (Join-Path $BuildTools "lib\apksigner.jar") sign `
     --ks $Keystore --ks-pass "pass:$KeystorePass" `
     --key-pass "pass:$KeyPass" --ks-key-alias $KeyAlias `

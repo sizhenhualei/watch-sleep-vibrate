@@ -30,6 +30,7 @@ public class MainActivity extends Activity {
     public static final String KEY_THRESHOLD = "threshold_sec";
     public static final String KEY_AMPLITUDE = "amplitude";
     public static final String KEY_INTERVAL = "interval_sec";
+    public static final String KEY_CONFIRM = "confirm_sec";
     public static final String KEY_RUNNING = "running";
 
     public static final int ID_START = 0x3e9;
@@ -44,11 +45,13 @@ public class MainActivity extends Activity {
     private static final int ID_THRESHOLD = 0x7d1;
     private static final int ID_AMPLITUDE = 0x7d2;
     private static final int ID_INTERVAL = 0x7d3;
+    private static final int ID_CONFIRM = 0x7d4;
 
     private SharedPreferences prefs;
     private EditText thresholdInput;
     private EditText amplitudeInput;
     private EditText intervalInput;
+    private EditText confirmInput;
     private TextView thresholdLabel;
     private TextView modeHint;
     private TextView statusView;
@@ -62,6 +65,7 @@ public class MainActivity extends Activity {
     private int thresholdSec = 180;
     private int amplitude = 255;
     private int intervalSec = 3;
+    private int confirmSec = 20;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,6 +122,7 @@ public class MainActivity extends Activity {
 
         amplitudeInput = makeInput(root, "震动强度（1-255）", amplitude, ID_AMPLITUDE);
         intervalInput = makeInput(root, "震动间隔（秒，1-30）", intervalSec, ID_INTERVAL);
+        confirmInput = makeInput(root, "二次确认（秒，1-60）", confirmSec, ID_CONFIRM);
 
         startButton = makeButton("开启监测", ID_START, Color.parseColor("#1565C0"));
         add(root, startButton);
@@ -162,6 +167,7 @@ public class MainActivity extends Activity {
         addAutoSave(thresholdInput);
         addAutoSave(amplitudeInput);
         addAutoSave(intervalInput);
+        addAutoSave(confirmInput);
         updateModeUi();
         updateRunningUi();
     }
@@ -195,16 +201,17 @@ public class MainActivity extends Activity {
         if (thresholdLabel != null) thresholdLabel.setVisibility(visibility);
         if (thresholdInput != null) thresholdInput.setVisibility(visibility);
         if (modeHint != null) {
+            int confirm = Math.max(1, Math.min(60, confirmSec));
             if (eco) {
-                modeHint.setText("事件驱动 · 判定时间可调 · 静止后 30 秒确认");
+                modeHint.setText("事件驱动 · 判定时间可调 · 静止后 " + confirm + " 秒确认");
             } else if (selectedMode() == MonitorService.MODE_SIXTY) {
-                modeHint.setText("固定策略 · 60 秒采样 → 30 秒确认（约 90 秒）");
+                modeHint.setText("固定策略 · 60 秒采样 → " + confirm + " 秒确认（约 " + (60 + confirm) + " 秒）");
             } else if (selectedMode() == MonitorService.MODE_LOW) {
-                modeHint.setText("固定策略 · 30 秒采样 → 30 秒确认（约 60 秒）");
+                modeHint.setText("固定策略 · 30 秒采样 → " + confirm + " 秒确认（约 " + (30 + confirm) + " 秒）");
             } else if (selectedMode() == MonitorService.MODE_HIGH) {
-                modeHint.setText("固定策略 · 15 秒采样 → 30 秒确认（约 45 秒）");
+                modeHint.setText("固定策略 · 15 秒采样 → " + confirm + " 秒确认（约 " + (15 + confirm) + " 秒）");
             } else {
-                modeHint.setText("固定策略 · 连续监测 → 30 秒确认（约 30 秒）");
+                modeHint.setText("固定策略 · 连续监测 → " + confirm + " 秒确认（约 " + confirm + " 秒）");
             }
         }
     }
@@ -245,6 +252,7 @@ public class MainActivity extends Activity {
         thresholdSec = prefs.getInt(KEY_THRESHOLD, 180);
         amplitude = prefs.getInt(KEY_AMPLITUDE, 255);
         intervalSec = prefs.getInt(KEY_INTERVAL, 3);
+        confirmSec = prefs.getInt(KEY_CONFIRM, 20);
     }
 
     private void selectMode(int value) {
@@ -273,13 +281,16 @@ public class MainActivity extends Activity {
         thresholdSec = clamp(readInt(thresholdInput, 180), 1, 999);
         amplitude = clamp(readInt(amplitudeInput, 255), 1, 255);
         intervalSec = clamp(readInt(intervalInput, 3), 1, 30);
+        confirmSec = clamp(readInt(confirmInput, 20), 1, 60);
         mode = selectedMode();
         prefs.edit()
                 .putInt(KEY_MODE, mode)
                 .putInt(KEY_THRESHOLD, thresholdSec)
                 .putInt(KEY_AMPLITUDE, amplitude)
                 .putInt(KEY_INTERVAL, intervalSec)
+                .putInt(KEY_CONFIRM, confirmSec)
                 .apply();
+        updateModeUi();
     }
 
     private void startMonitor() {

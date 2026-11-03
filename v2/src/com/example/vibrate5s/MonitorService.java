@@ -37,7 +37,7 @@ public class MonitorService extends Service {
     public static final String ACTION_SAMPLE = "com.example.vibrate5s.action.SAMPLE";
     public static final String ACTION_ALARM = "com.example.vibrate5s.action.ALARM";
 
-    private static final long CONFIRM_MS = 30000L;
+    private static final long DEFAULT_CONFIRM_MS = 20000L;
     private static final long SAMPLE_MS = 2000L;
     private static final long VIBRATE_MS = 800L;
 
@@ -54,6 +54,7 @@ public class MonitorService extends Service {
     private long thresholdMs = 180000L;
     private long intervalMs = 3000L;
     private long sampleIntervalMs = 30000L;
+    private long confirmMs = DEFAULT_CONFIRM_MS;
 
     private SensorManager sensorManager;
     private Sensor accelerometer;
@@ -79,12 +80,22 @@ public class MonitorService extends Service {
     private boolean confirming;
     private boolean alarmActive;
     private boolean baseLock;
+    private boolean ecoFallback;
+    private boolean forceEcoFallback;
 
     @Override
     public void onCreate() {
         super.onCreate();
         RUNNING = true;
         prefs = getSharedPreferences(MainActivity.PREFS, MODE_PRIVATE);
+        try {
+            android.content.pm.ApplicationInfo ai = getPackageManager()
+                    .getApplicationInfo(getPackageName(), 128);
+            forceEcoFallback = ai.metaData != null
+                    && ai.metaData.getBoolean("ndz.force_eco_fallback", false);
+        } catch (Exception ignored) {
+            forceEcoFallback = false;
+        }
         startInForeground();
 
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
@@ -237,9 +248,11 @@ public class MonitorService extends Service {
         thresholdSec = prefs.getInt(MainActivity.KEY_THRESHOLD, 180);
         amplitude = prefs.getInt(MainActivity.KEY_AMPLITUDE, 255);
         intervalSec = prefs.getInt(MainActivity.KEY_INTERVAL, 3);
-        // Eco uses the user's threshold. The three fixed strategies encode
-        // their latency in the mode: Low waits 30s, High 15s, Max 0s before
-        // the common 30s confirmation window.
+        int confirmSec = prefs.getInt(MainActivity.KEY_CONFIRM, 20);
+        confirmMs = Math.max(1, Math.min(60, confirmSec)) * 1000L;
+        // Eco uses the user's threshold. The fixed strategies encode their
+        // latency in the mode: Low waits 30s, High 15s, Sixty 60s, Max 0s
+        // before the common configurable confirmation window.
         if (mode == MODE_LOW) {
             thresholdMs = 30000L;
         } else if (mode == MODE_HIGH) {
@@ -268,10 +281,18 @@ public class MonitorService extends Service {
         baseLock = false;
 
         lastMovement = SystemClock.elapsedRealtime();
+        ecoFallback = false;
         if (mode == MODE_ECO) {
-            register(orientationSensor, SensorManager.SENSOR_DELAY_NORMAL);
-            register(wristSensor, SensorManager.SENSOR_DELAY_NORMAL);
-            scheduleThresholdAlarm();
+            if (forceEcoFallback || (orientationSensor == null && wristSensor == null)) {
+                // OPPO / non-Wear devices often lack the two hidden gesture
+                // sensors. Keep Eco usable by sampling the accelerometer.
+                ecoFallback = true;
+                scheduleSample(30000L);
+            } else {
+                register(orientationSensor, SensorManager.SENSOR_DELAY_NORMAL);
+                register(wristSensor, SensorManager.SENSOR_DELAY_NORMAL);
+                scheduleThresholdAlarm();
+            }
         } else if (mode == MODE_LOW || mode == MODE_HIGH || mode == MODE_SIXTY) {
             scheduleSample(sampleIntervalMs);
         } else {
@@ -283,7 +304,8 @@ public class MonitorService extends Service {
     }
 
     private void handleSampleAlarm() {
-        if (mode != MODE_LOW && mode != MODE_HIGH && mode != MODE_SIXTY) return;
+        if (mode != MODE_LOW && mode != MODE_HIGH && mode != MODE_SIXTY
+                && !(mode == MODE_ECO && ecoFallback)) return;
         if (sampling || confirming || alarmActive) return;
         sampling = true;
         acquireLockFor(5000L);
@@ -314,9 +336,9 @@ public class MonitorService extends Service {
         confirming = true;
         cancelAll();
         unregisterAll();
-        if (!baseLock) acquireLockFor(40000L);
+        if (!baseLock) acquireLockFor(Math.max(15000L, confirmMs + 10000L));
         register(accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-        handler.postDelayed(confirmFinishRunnable, CONFIRM_MS);
+        handler.postDelayed(confirmFinishRunnable, confirmMs);
     }
 
     private void finishConfirmation() {
@@ -345,15 +367,23 @@ public class MonitorService extends Service {
             if (!baseLock) releaseLock(false);
             resumeDetection();
         } else if (mode == MODE_ECO) {
-            scheduleThresholdAlarm();
+            if (ecoFallback) {
+                scheduleSample(30000L);
+            } else {
+                scheduleThresholdAlarm();
+            }
         }
     }
 
     private void resumeDetection() {
         if (mode == MODE_ECO) {
-            register(orientationSensor, SensorManager.SENSOR_DELAY_NORMAL);
-            register(wristSensor, SensorManager.SENSOR_DELAY_NORMAL);
-            scheduleThresholdAlarm();
+            if (ecoFallback) {
+                scheduleSample(30000L);
+            } else {
+                register(orientationSensor, SensorManager.SENSOR_DELAY_NORMAL);
+                register(wristSensor, SensorManager.SENSOR_DELAY_NORMAL);
+                scheduleThresholdAlarm();
+            }
         } else if (mode == MODE_LOW || mode == MODE_HIGH || mode == MODE_SIXTY) {
             scheduleSample(sampleIntervalMs);
         } else {
@@ -373,11 +403,15 @@ public class MonitorService extends Service {
         alarmActive = true;
         alarmGraceUntil = SystemClock.elapsedRealtime() + 2000L;
         acquireLock();
-        // Keep a movement listener alive while the alarm is firing.  Use the
-        // wrist/orientation wake-up sensors, not the accelerometer: vibration
-        // can move the accelerometer enough to look like a false "movement".
-        register(orientationSensor, SensorManager.SENSOR_DELAY_NORMAL);
-        register(wristSensor, SensorManager.SENSOR_DELAY_NORMAL);
+        // Keep a movement listener alive while the alarm is firing.  Prefer the
+        // wrist/orientation wake-up sensors; on OPPO devices that do not expose
+        // them, fall back to the accelerometer with a grace window.
+        if (!forceEcoFallback && (orientationSensor != null || wristSensor != null)) {
+            register(orientationSensor, SensorManager.SENSOR_DELAY_NORMAL);
+            register(wristSensor, SensorManager.SENSOR_DELAY_NORMAL);
+        } else {
+            register(accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+        }
         vibrateOnce();
         handler.removeCallbacks(pulseRunnable);
         handler.postDelayed(pulseRunnable, intervalMs);
